@@ -11,17 +11,18 @@ socket.onmessage = function (event) {
 
   if (msg.action === 'color') {
 
-    const { r, g, b, w } = msg.data;
+    const { data } = msg;
+
+    data.a = data.w / 255;
+
+    const { r, g, b, a } = data;
 
     colorPicker.color.red = r;
     colorPicker.color.green = g;
     colorPicker.color.blue = b;
-    colorPicker.color.alpha = w / 255;
-    changeBackgroundColor(msg.data);
+    colorPicker.color.alpha = a;
+    changeBackgroundColor(data);
   }
-
-
-  // console.log(`[message] Data received from server: ${event.data}`);
 };
 
 socket.onclose = function (event) {

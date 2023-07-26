@@ -55,7 +55,7 @@ void setup()
   }
   else
   {
-    snprintf(name, sizeof(name), "lamp%s", String(ESP.getChipId(), HEX).c_str());
+    snprintf(name, sizeof(name), "%s", String(ESP.getChipId()).c_str());
     preferences.putString("name", name);
   }
 
@@ -92,6 +92,10 @@ void setup()
   // WebSocket route
   ws.onEvent(onWebSocketEvent);
 
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(LittleFS, "/index.html", String(), false, resolve);
+  });
+
   server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
 
   server.onNotFound(handleNotFound);
@@ -103,6 +107,18 @@ void setup()
   setColor(preferences.getUInt("color", mainColor));
 }
 
+String resolve(String var)
+{
+  if (var == "LAMP_NAME")
+  {
+    return preferences.getString("name");
+  }
+  else
+  {
+    return String();
+  }
+}
+
 void handleNotFound(AsyncWebServerRequest *request)
 {
   request->send(404, "text/plain", "Not found");
@@ -110,8 +126,8 @@ void handleNotFound(AsyncWebServerRequest *request)
 
 void loop()
 {
+  drd.loop();
   MDNS.update();
-  // Nothing to do here, handling WebSocket events in onWebSocketEvent()
 }
 
 void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)

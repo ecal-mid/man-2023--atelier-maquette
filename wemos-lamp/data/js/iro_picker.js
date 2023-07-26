@@ -17,8 +17,19 @@ const colorPicker = new iro.ColorPicker('#color', {
 });
 colorPicker.color.value = 0; // Initially the LED is off
 
-function changeBackgroundColor(rgb) {
-    document.body.style.backgroundColor = "rgb(" + rgb.r + ", " + rgb.g + ", " + rgb.b + ")";
+function changeBackgroundColor(rgba) {
+    let { r, g, b, a } = rgba;
+
+    a *= 255 * 0.5;
+    r *= 0.5
+    g *= 0.5;
+    b *= 0.5;
+
+    r = Math.min(r + a, 255);
+    g = Math.min(g + a, 255);
+    b = Math.min(b + a, 255);
+
+    document.body.style.backgroundColor = `rgb(${r},${g},${b})`;
 }
 
 function sendColorToWS(rgba) {
