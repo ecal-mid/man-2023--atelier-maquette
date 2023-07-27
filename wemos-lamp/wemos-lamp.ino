@@ -15,9 +15,7 @@
 
 #include <ESPAsyncWiFiManager.h> //https://github.com/tzapu/WiFiManager
 
-#define DRD_TIMEOUT 10
-#define DRD_ADDRESS 0
-DoubleResetDetector drd(DRD_TIMEOUT, DRD_ADDRESS);
+DoubleResetDetector drd(10, 0);
 
 #define NUM_PIXELS 7 // Number of NeoPixels in the Jewel
 #define DATA_PIN D3  // Arduino digital pin connected to the DIN of the Jewel
@@ -43,8 +41,8 @@ void setup()
   digitalWrite(LED_BUILTIN, LOW);
   if (drd.detectDoubleReset())
   {
-    preferences.clear();
-    wm.resetSettings();
+    // preferences.clear();
+    // wm.resetSettings();
   }
 
   char name[32]; // Create a character array to hold the username
@@ -92,9 +90,8 @@ void setup()
   // WebSocket route
   ws.onEvent(onWebSocketEvent);
 
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(LittleFS, "/index.html", String(), false, resolve);
-  });
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(LittleFS, "/index.html", String(), false, resolve); });
 
   server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
 
@@ -215,13 +212,25 @@ void handleCommand(String &msg, AsyncWebSocketClient *client)
     setColor(color);
     preferences.putUInt("color", color);
 
-    // textAll
-    // ws.textAll(msg);
+    // sendExcept(msg, client); // BUGGY
   }
   else if (strcmp(action, "get") == 0)
   {
     sendColor(mainColor, client);
   }
+}
+
+void sendExcept(String &msg, AsyncWebSocketClient *client)
+{
+  for (size_t i = 0; i < ws.count(); i++)
+  {
+    AsyncWebSocketClient *c = ws.client(i);
+    if (c != client)
+      c->text(msg);
+  }
+
+  // textAll
+  // ws.textAll(msg);
 }
 
 void setColor(uint32_t color)
